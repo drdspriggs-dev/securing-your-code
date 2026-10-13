@@ -16,16 +16,22 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
-      - name: Check Agency prerequisite
+      - name: Install Agency CLI
+        timeout-minutes: 5
         shell: bash
         run: |
-          if ! command -v agency > /dev/null 2>&1; then
-            echo "::error::Agency CLI is missing. Add the approved Linux installation and CI authentication steps before loading the company plugin."
-            exit 1
-          fi
-      - name: Load Service360 Breeze plugin and agent
+          installer="$(mktemp)"
+          trap 'rm -f "$installer"' EXIT
+          curl --fail --show-error --silent --location \
+            https://aka.ms/InstallTool.sh --output "$installer"
+          bash "$installer" agency
+          agency_dir="$HOME/.config/agency/CurrentVersion"
+          "$agency_dir/agency" --version
+          echo "$agency_dir" >> "$GITHUB_PATH"
+      - name: Install Service360 Breeze plugin
+        timeout-minutes: 5
         shell: bash
         run: |
-          agency copilot \
-            --plugin mp:service360-breeze-official@company \
-            --agent service360-breeze-official:s360-action-item-resolver
+          agency plugin install \
+            mp:service360-breeze-official@company \
+            --engine copilot
