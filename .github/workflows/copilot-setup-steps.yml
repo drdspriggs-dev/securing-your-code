@@ -1,0 +1,31 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check Agency prerequisite
+        shell: bash
+        run: |
+          if ! command -v agency > /dev/null 2>&1; then
+            echo "::error::Agency CLI is missing. Add the approved Linux installation and CI authentication steps before loading the company plugin."
+            exit 1
+          fi
+      - name: Load Service360 Breeze plugin and agent
+        shell: bash
+        run: |
+          agency copilot \
+            --plugin mp:service360-breeze-official@company \
+            --agent service360-breeze-official:s360-action-item-resolver
